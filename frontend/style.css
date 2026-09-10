@@ -1,0 +1,464 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f5f7fb;
+    color: #1f2937;
+}
+
+
+/* =========================================================
+   Header
+========================================================= */
+
+.topbar {
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 24px 40px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topbar h1 {
+    margin: 0 0 6px;
+    font-size: 28px;
+}
+
+.topbar p {
+    margin: 0;
+    color: #6b7280;
+}
+
+.status-badge {
+    padding: 8px 14px;
+    border-radius: 20px;
+    background: #ecfdf5;
+    color: #047857;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   Container
+========================================================= */
+
+.container {
+    width: min(1200px, 92%);
+    margin: 32px auto;
+}
+
+
+/* =========================================================
+   Cards
+========================================================= */
+
+.card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.section-header h2 {
+    margin: 0 0 6px;
+}
+
+.section-header p {
+    margin: 0;
+    color: #6b7280;
+}
+
+
+/* =========================================================
+   Form
+========================================================= */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+}
+
+.form-group small {
+    color: #6b7280;
+}
+
+input[type="file"],
+select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    font-size: 14px;
+}
+
+input[type="file"]:focus,
+select:focus {
+    outline: 2px solid #dbeafe;
+    border-color: #2563eb;
+}
+
+.form-actions {
+    margin-top: 24px;
+}
+
+
+/* =========================================================
+   Buttons
+========================================================= */
+
+button {
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.primary-button {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+}
+
+.primary-button:hover {
+    background: #1d4ed8;
+}
+
+.primary-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.secondary-button {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 9px 14px;
+    background: #ffffff;
+    color: #374151;
+    font-weight: 600;
+}
+
+.secondary-button:hover {
+    background: #f9fafb;
+}
+
+.view-button {
+    border: none;
+    border-radius: 6px;
+    padding: 7px 12px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.view-button:hover {
+    background: #dbeafe;
+}
+
+
+/* =========================================================
+   Messages
+========================================================= */
+
+.message {
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 8px;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.message.error {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.hidden {
+    display: none !important;
+}
+
+
+/* =========================================================
+   Tables
+========================================================= */
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #f9fafb;
+}
+
+th,
+td {
+    padding: 13px 14px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+}
+
+th {
+    font-size: 13px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+td {
+    font-size: 14px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 35px;
+    color: #6b7280;
+}
+
+.error-text {
+    color: #b91c1c;
+}
+
+
+/* =========================================================
+   Status
+========================================================= */
+
+.status {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-success {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.status-failed {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+
+/* =========================================================
+   Result
+========================================================= */
+
+.result-block {
+    margin-top: 30px;
+}
+
+.result-block h3 {
+    margin-bottom: 16px;
+}
+
+.result-block h4 {
+    margin-top: 25px;
+    margin-bottom: 12px;
+}
+
+
+/* =========================================================
+   Information Grid
+========================================================= */
+
+.info-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(180px, 1fr));
+
+    gap: 14px;
+}
+
+.info-item {
+    padding: 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+}
+
+.info-item span {
+    display: block;
+    color: #6b7280;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.info-item strong {
+    display: block;
+    word-break: break-word;
+}
+
+
+/* =========================================================
+   Periods
+========================================================= */
+
+.period-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.period-tag {
+    padding: 7px 11px;
+    border-radius: 20px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   Validation
+========================================================= */
+
+.validation-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.validation-card {
+    border: 1px solid #e5e7eb;
+    border-left: 5px solid;
+    border-radius: 8px;
+    padding: 16px;
+    background: #ffffff;
+}
+
+.validation-pass {
+    border-left-color: #059669;
+}
+
+.validation-fail {
+    border-left-color: #dc2626;
+}
+
+.validation-na {
+    border-left-color: #6b7280;
+}
+
+.validation-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 10px;
+}
+
+.validation-header span {
+    font-weight: 700;
+}
+
+.validation-pass .validation-header span {
+    color: #047857;
+}
+
+.validation-fail .validation-header span {
+    color: #b91c1c;
+}
+
+.validation-na .validation-header span {
+    color: #6b7280;
+}
+
+.validation-card p {
+    margin: 6px 0;
+    color: #4b5563;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   Raw JSON
+========================================================= */
+
+.raw-json-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+pre {
+    margin: 0;
+    padding: 20px;
+    border-radius: 8px;
+    background: #111827;
+    color: #e5e7eb;
+    overflow-x: auto;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   Responsive
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .topbar {
+        padding: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .container {
+        width: 94%;
+        margin: 20px auto;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        padding: 18px;
+    }
+
+    .section-header {
+        align-items: flex-start;
+        gap: 15px;
+        flex-direction: column;
+    }
+
+}

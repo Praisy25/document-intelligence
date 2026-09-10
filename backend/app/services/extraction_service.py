@@ -13,7 +13,10 @@ from app.schemas.extraction import (
 
 class ExtractionError(Exception):
     """Raised when document extraction fails."""
-    pass
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
 
 logger = logging.getLogger(__name__)
 
@@ -426,7 +429,7 @@ def create_client() -> OpenAI:
         timeout=60.0,
 
         # Retry only once for transient failures.
-        max_retries=1,
+        max_retries=3,
     )
 
 

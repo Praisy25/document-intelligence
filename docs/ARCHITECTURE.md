@@ -37,7 +37,7 @@ Documents that do not satisfy these requirements are rejected before OCR or LLM 
 
 ## 3. High-Level Architecture
 
-```text
+text
                         User
                           |
                           v
@@ -1328,7 +1328,6 @@ document-intelligence/
 ├── .gitignore
 ├── README.md
 └── requirements.txt
-```
 
 
 

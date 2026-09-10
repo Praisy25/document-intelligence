@@ -1,34 +1,30 @@
-from pathlib import Path
+import io
 import logging
+import re
+from pathlib import Path
 
-import fitz  # PyMuPDF
+import fitz
 import pytesseract
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image, ImageFilter, ImageOps
+from pytesseract import Output
 
 
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# CONFIGURATION
-# ============================================================
+class OCRProcessingError(Exception):
+    """
+    Raised when OCR or text extraction fails.
+    """
+
+    def __init__(self, message: str):
+        self.message = message
+        super().__init__(message)
+
 
 MIN_TEXT_LENGTH = 30
-
-# Higher resolution improves OCR accuracy for scanned documents.
 PDF_RENDER_SCALE = 4
 
-# OCR configurations.
-#
-# PSM 6:
-# Treat the image as a uniform block of text.
-# Usually best for invoices/tables.
-#
-# PSM 4:
-# Assume a single column of text.
-#
-# PSM 11:
-# Sparse text detection.
 OCR_CONFIGS = [
     "--psm 6",
     "--psm 4",
@@ -37,96 +33,69 @@ OCR_CONFIGS = [
 
 
 # ============================================================
-# EXCEPTIONS
-# ============================================================
-
-class OCRProcessingError(Exception):
-    """Raised when text extraction or OCR fails."""
-
-    def __init__(self, message: str):
-        self.message = message
-        super().__init__(message)
-
-
-# ============================================================
 # IMAGE PREPROCESSING
 # ============================================================
 
-def preprocess_image(image: Image.Image) -> Image.Image:
+def _preprocess_image(image: Image.Image) -> Image.Image:
     """
-    Preprocess an image to improve OCR accuracy.
+    Prepare an image for OCR.
 
-    Steps:
-    1. Convert to grayscale.
-    2. Improve contrast.
-    3. Upscale 2x.
-    4. Sharpen.
-    5. Apply mild unsharp masking.
-
-    Important:
-    We do NOT modify the actual financial text.
+    Keeps preprocessing intentionally moderate so that
+    table structure and small characters are not destroyed.
     """
 
-    # Convert to grayscale.
-    processed = ImageOps.grayscale(image)
+    image = ImageOps.grayscale(image)
 
-    # Improve contrast.
-    processed = ImageOps.autocontrast(
-        processed,
+    image = ImageOps.autocontrast(
+        image,
         cutoff=1,
     )
 
-    # Upscale 2x.
-    processed = processed.resize(
+    image = image.resize(
         (
-            processed.width * 2,
-            processed.height * 2,
+            image.width * 2,
+            image.height * 2,
         ),
         Image.Resampling.LANCZOS,
     )
 
-    # Sharpen.
-    processed = processed.filter(
+    image = image.filter(
         ImageFilter.SHARPEN
     )
 
-    # Mild additional sharpening.
-    processed = processed.filter(
+    image = image.filter(
         ImageFilter.UnsharpMask(
             radius=1,
-            percent=150,
+            percent=120,
             threshold=3,
         )
     )
 
-    return processed
+    return image
 
 
 # ============================================================
 # OCR CONFIDENCE
 # ============================================================
 
-def calculate_ocr_confidence(
+def _calculate_confidence(
     image: Image.Image,
     config: str,
 ) -> float:
     """
-    Calculate average OCR confidence using Tesseract.
-
-    Tesseract returns confidence values per detected word.
-    We average valid confidence values.
+    Calculate average Tesseract OCR confidence.
     """
 
     try:
         data = pytesseract.image_to_data(
             image,
             config=config,
-            output_type=pytesseract.Output.DICT,
+            output_type=Output.DICT,
         )
 
         confidences = []
 
-        for confidence in data["conf"]:
+        for confidence in data.get("conf", []):
             try:
                 value = float(confidence)
 
@@ -139,27 +108,259 @@ def calculate_ocr_confidence(
         if not confidences:
             return 0.0
 
-        return sum(confidences) / len(confidences)
+        return round(
+            sum(confidences) / len(confidences),
+            2,
+        )
 
-    except Exception:
+    except Exception as exc:
+        logger.warning(
+            "[OCR] Confidence calculation failed: %s",
+            exc,
+        )
+
         return 0.0
 
 
 # ============================================================
-# RUN OCR
+# OCR STRUCTURE SCORING
+# ============================================================
+
+def _normalize_text(text: str) -> str:
+    """
+    Normalize whitespace while preserving lines.
+    """
+
+    lines = []
+
+    for line in text.splitlines():
+
+        line = re.sub(
+            r"[ \t]+",
+            " ",
+            line,
+        ).strip()
+
+        if line:
+            lines.append(line)
+
+    return "\n".join(lines)
+
+
+def _candidate_score(
+    text: str,
+    confidence: float,
+) -> float:
+    """
+    Score OCR output based on information preservation.
+
+    Confidence alone is not sufficient because a high-confidence
+    OCR result can still lose table rows.
+
+    This score rewards:
+    - item codes
+    - numeric values
+    - table-like lines
+    - invoice/financial keywords
+    - overall OCR confidence
+    """
+
+    if not text:
+        return -1000.0
+
+    text = _normalize_text(text)
+
+    lines = [
+        line
+        for line in text.splitlines()
+        if line.strip()
+    ]
+
+    lower_text = text.lower()
+
+    # --------------------------------------------------------
+    # Numeric tokens
+    # --------------------------------------------------------
+
+    numeric_tokens = re.findall(
+        r"(?<!\w)-?\d+(?:[.,]\d+)*",
+        text,
+    )
+
+    # --------------------------------------------------------
+    # Item codes
+    # Example: TS-001, ITEM-123
+    # --------------------------------------------------------
+
+    item_codes = re.findall(
+        r"\b[A-Z]{1,10}[-_]\d{2,}\b",
+        text,
+        flags=re.IGNORECASE,
+    )
+
+    # --------------------------------------------------------
+    # Financial/document keywords
+    # --------------------------------------------------------
+
+    keywords = [
+        "invoice",
+        "invoice no",
+        "date",
+        "vendor",
+        "customer",
+        "item",
+        "description",
+        "qty",
+        "quantity",
+        "price",
+        "amount",
+        "subtotal",
+        "tax",
+        "total",
+        "cash",
+        "change",
+        "balance",
+        "assets",
+        "liabilities",
+        "capital",
+        "income",
+        "expense",
+        "profit",
+        "loss",
+        "cash flow",
+        "operating",
+        "investing",
+        "financing",
+    ]
+
+    keyword_hits = sum(
+        1
+        for keyword in keywords
+        if keyword in lower_text
+    )
+
+    # --------------------------------------------------------
+    # Numeric/table lines
+    # --------------------------------------------------------
+
+    numeric_lines = 0
+
+    for line in lines:
+
+        numbers = re.findall(
+            r"(?<!\w)-?\d+(?:[.,]\d+)*",
+            line,
+        )
+
+        if len(numbers) >= 2:
+            numeric_lines += 1
+
+    # --------------------------------------------------------
+    # Item-code lines
+    # --------------------------------------------------------
+
+    item_code_lines = 0
+
+    for line in lines:
+
+        if re.search(
+            r"\b[A-Z]{1,10}[-_]\d{2,}\b",
+            line,
+            flags=re.IGNORECASE,
+        ):
+            item_code_lines += 1
+
+    # --------------------------------------------------------
+    # Score
+    # --------------------------------------------------------
+
+    score = (
+        confidence * 0.35
+        + min(len(lines), 30) * 1.5
+        + min(len(numeric_tokens), 40) * 2.0
+        + min(len(item_codes), 10) * 8.0
+        + min(keyword_hits, 15) * 2.0
+        + min(numeric_lines, 15) * 5.0
+        + min(item_code_lines, 10) * 12.0
+    )
+
+    return round(
+        score,
+        2,
+    )
+
+
+# ============================================================
+# RUN ONE OCR CANDIDATE
+# ============================================================
+
+def _run_candidate(
+    image: Image.Image,
+    config: str,
+    source: str,
+) -> dict:
+    """
+    Run Tesseract using one page segmentation mode.
+    """
+
+    text = pytesseract.image_to_string(
+        image,
+        config=config,
+    ).strip()
+
+    text = _normalize_text(text)
+
+    confidence = _calculate_confidence(
+        image,
+        config,
+    )
+
+    score = _candidate_score(
+        text,
+        confidence,
+    )
+
+    logger.info(
+        "[OCR %s] %s | %d chars | %.2f confidence",
+        source.upper(),
+        config,
+        len(text),
+        confidence,
+    )
+
+    logger.info(
+        "[OCR %s PREVIEW]\n%s",
+        source.upper(),
+        text[:2000],
+    )
+
+    logger.info(
+        "[OCR %s] %s score: %.2f",
+        source.upper(),
+        config,
+        score,
+    )
+
+    return {
+        "text": text,
+        "confidence": confidence,
+        "config": config,
+        "source": source,
+        "score": score,
+    }
+
+
+# ============================================================
+# RUN MULTIPLE OCR MODES
 # ============================================================
 
 def run_ocr(
     image: Image.Image,
-    label: str,
+    source: str,
 ) -> dict:
     """
-    Run OCR using multiple Tesseract configurations.
-
-    Returns the best OCR candidate.
-
-    For structured financial documents, PSM 6 is preferred because
-    it usually preserves table rows and columns better.
+    Run several Tesseract configurations and select
+    the candidate with the best information-preservation score.
     """
 
     candidates = []
@@ -167,324 +368,233 @@ def run_ocr(
     for config in OCR_CONFIGS:
 
         try:
-            text = pytesseract.image_to_string(
-                image,
+
+            candidate = _run_candidate(
+                image=image,
                 config=config,
-            ).strip()
-
-            confidence = calculate_ocr_confidence(
-                image,
-                config,
+                source=source,
             )
 
-            logger.info(
-                "[OCR %s] %s | %s chars | %.2f confidence",
-                label,
-                config,
-                len(text),
-                confidence,
-            )
-
-            logger.info(
-                "[OCR %s PREVIEW]\n%s",
-                label,
-                text[:1000],
-            )
-
-            candidates.append(
-                {
-                    "text": text,
-                    "confidence": confidence,
-                    "config": config,
-                }
-            )
+            candidates.append(candidate)
 
         except Exception as exc:
 
             logger.warning(
                 "[OCR %s] %s failed: %s",
-                label,
+                source.upper(),
                 config,
-                str(exc),
+                exc,
             )
 
     if not candidates:
+
         raise OCRProcessingError(
-            f"OCR failed for {label}: no OCR candidates were produced."
+            f"OCR failed for source: {source}"
         )
 
-    # --------------------------------------------------------
-    # IMPORTANT SELECTION LOGIC
-    # --------------------------------------------------------
-    #
-    # For invoices and financial documents, confidence alone
-    # is NOT enough.
-    #
-    # In the user's test:
-    #
-    # PSM 6  -> 91.72 confidence -> preserves Qty 2 and 5
-    # PSM 4  -> 91.33 confidence -> preserves Qty 2 and 5
-    # PSM 11 -> 92.05 confidence -> loses Qty 2 and 5
-    #
-    # Therefore we prioritize PSM 6, then PSM 4, then PSM 11.
-    # Within the same preferred configuration, confidence is used.
-    # --------------------------------------------------------
-
-    preferred_psm_order = {
-        "--psm 6": 3,
-        "--psm 4": 2,
-        "--psm 11": 1,
-    }
-
-    # First remove completely empty results.
-    non_empty_candidates = [
-        candidate
-        for candidate in candidates
-        if candidate["text"].strip()
-    ]
-
-    if not non_empty_candidates:
-        raise OCRProcessingError(
-            f"OCR failed for {label}: OCR returned no readable text."
-        )
-
-    best_result = max(
-        non_empty_candidates,
-        key=lambda item: (
-            preferred_psm_order.get(
-                item["config"],
-                0,
-            ),
-            item["confidence"],
-            len(item["text"]),
-        ),
+    selected = max(
+        candidates,
+        key=lambda candidate: candidate["score"],
     )
 
     logger.info(
         "[OCR %s] Selected config: %s",
-        label,
-        best_result["config"],
+        source.upper(),
+        selected["config"],
     )
 
     logger.info(
         "[OCR %s] Selected confidence: %.2f",
-        label,
-        best_result["confidence"],
+        source.upper(),
+        selected["confidence"],
     )
 
-    return best_result
+    logger.info(
+        "[OCR %s] Selected score: %.2f",
+        source.upper(),
+        selected["score"],
+    )
+
+    return selected
 
 
 # ============================================================
-# PDF NATIVE TEXT EXTRACTION
+# PDF NATIVE TEXT
 # ============================================================
 
 def extract_text_from_pdf(
-    file_path: str,
-) -> dict:
+    file_bytes: bytes,
+) -> tuple[str, bool]:
     """
-    Extract native text from a PDF.
+    Try native PDF text extraction first.
 
-    Every page is processed.
-
-    If the combined native text is too short,
-    OCR is performed on the PDF pages.
+    If the PDF contains insufficient native text,
+    fall back to OCR.
     """
-
-    pdf = None
 
     try:
 
-        pdf = fitz.open(file_path)
+        pdf = fitz.open(
+            stream=file_bytes,
+            filetype="pdf",
+        )
 
-        pages = []
-        combined_text_parts = []
+        native_pages = []
 
-        for page_number, page in enumerate(
-            pdf,
-            start=1,
-        ):
+        for page in pdf:
 
-            text = page.get_text(
+            page_text = page.get_text(
                 "text"
             ).strip()
 
-            logger.info(
-                "[PDF TEXT] Page %s: %s characters extracted directly",
-                page_number,
-                len(text),
+            native_pages.append(
+                page_text
             )
 
-            logger.info(
-                "[PDF TEXT PREVIEW] Page %s:\n%s",
-                page_number,
-                text[:1000],
-            )
-
-            pages.append(
-                {
-                    "page_number": page_number,
-                    "text": text,
-                    "ocr_used": False,
-                }
-            )
-
-            if text:
-                combined_text_parts.append(text)
-
-        combined_text = "\n".join(
-            combined_text_parts
+        native_text = "\n\n".join(
+            native_pages
         ).strip()
 
         logger.info(
-            "[PDF TEXT] Total native text length: %s",
-            len(combined_text),
+            "[PDF] Native text length: %d",
+            len(native_text),
         )
 
-        # If enough native text exists, use it.
-        if len(combined_text) >= MIN_TEXT_LENGTH:
+        # Native PDF text is good enough.
+        if len(native_text) >= MIN_TEXT_LENGTH:
 
-            return {
-                "text": combined_text,
-                "pages": pages,
-                "ocr_used": False,
-            }
+            return (
+                native_text,
+                False,
+            )
 
         logger.info(
-            "[PDF TEXT] Insufficient native text. Falling back to OCR."
+            "[PDF] Native text insufficient. "
+            "Falling back to OCR."
         )
 
-        return ocr_pdf(file_path)
+        result = ocr_pdf(
+            file_bytes
+        )
 
-    except OCRProcessingError:
-        raise
+        return (
+            result["text"],
+            True,
+        )
 
     except Exception as exc:
 
         logger.exception(
-            "Failed to extract text from PDF."
+            "[PDF] Extraction failed: %s",
+            exc,
         )
 
         raise OCRProcessingError(
-            f"Failed to extract text from PDF: {str(exc)}"
+            f"PDF extraction failed: {exc}"
         )
-
-    finally:
-
-        if pdf is not None:
-            pdf.close()
 
 
 # ============================================================
-# OCR PDF
+# PDF OCR
 # ============================================================
 
 def ocr_pdf(
-    file_path: str,
+    file_bytes: bytes,
 ) -> dict:
     """
-    Render each PDF page as an image and perform OCR.
+    Render each PDF page and perform OCR.
 
-    Each page is processed independently.
+    Page numbers are preserved.
     """
-
-    pdf = None
 
     try:
 
-        pdf = fitz.open(file_path)
+        pdf = fitz.open(
+            stream=file_bytes,
+            filetype="pdf",
+        )
 
-        pages = []
-        combined_text_parts = []
+        page_results = []
 
-        for page_number, page in enumerate(
-            pdf,
-            start=1,
-        ):
+        for page_index, page in enumerate(pdf):
+
+            page_number = page_index + 1
 
             logger.info(
-                "[OCR PDF] Processing page %s",
+                "[OCR PDF] Processing page %d",
                 page_number,
             )
 
-            # Render PDF page at high resolution.
+            matrix = fitz.Matrix(
+                PDF_RENDER_SCALE,
+                PDF_RENDER_SCALE,
+            )
+
             pixmap = page.get_pixmap(
-                matrix=fitz.Matrix(
-                    PDF_RENDER_SCALE,
-                    PDF_RENDER_SCALE,
-                ),
+                matrix=matrix,
                 alpha=False,
             )
 
-            image = Image.frombytes(
-                "RGB",
-                [
-                    pixmap.width,
-                    pixmap.height,
-                ],
-                pixmap.samples,
+            image_bytes = pixmap.tobytes(
+                "png"
             )
 
-            logger.info(
-                "[OCR PDF] Page %s original size: %s",
-                page_number,
-                image.size,
+            image = Image.open(
+                io.BytesIO(image_bytes)
+            ).convert("RGB")
+
+            processed_image = (
+                _preprocess_image(image)
             )
 
-            # Preprocess.
-            processed_image = preprocess_image(
-                image
+            original_result = run_ocr(
+                image,
+                source=(
+                    f"pdf-page-{page_number}-original"
+                ),
             )
 
-            logger.info(
-                "[OCR PDF] Page %s processed size: %s",
-                page_number,
-                processed_image.size,
-            )
-
-            result = run_ocr(
+            processed_result = run_ocr(
                 processed_image,
-                f"PDF PAGE {page_number}",
+                source=(
+                    f"pdf-page-{page_number}-processed"
+                ),
             )
 
-            text = result["text"].strip()
+            selected = max(
+                [
+                    original_result,
+                    processed_result,
+                ],
+                key=lambda candidate: candidate["score"],
+            )
 
-            pages.append(
+            page_results.append(
                 {
                     "page_number": page_number,
-                    "text": text,
-                    "ocr_used": True,
+                    "text": selected["text"],
+                    "confidence": selected["confidence"],
+                    "config": selected["config"],
+                    "source": selected["source"],
+                    "score": selected["score"],
                 }
             )
 
-            if text:
-                combined_text_parts.append(text)
+            logger.info(
+                "[OCR PDF] Page %d selected: %s",
+                page_number,
+                selected["config"],
+            )
 
         combined_text = "\n\n".join(
-            combined_text_parts
+            page["text"]
+            for page in page_results
+            if page["text"]
         ).strip()
-
-        logger.info(
-            "[OCR PDF] Final text length: %s",
-            len(combined_text),
-        )
-
-        logger.info(
-            "[OCR PDF FINAL PREVIEW]\n%s",
-            combined_text[:2000],
-        )
-
-        if len(combined_text) < MIN_TEXT_LENGTH:
-
-            raise OCRProcessingError(
-                "OCR completed but insufficient readable text "
-                "was detected in the PDF."
-            )
 
         return {
             "text": combined_text,
-            "pages": pages,
-            "ocr_used": True,
+            "pages": page_results,
         }
 
     except OCRProcessingError:
@@ -493,63 +603,45 @@ def ocr_pdf(
     except Exception as exc:
 
         logger.exception(
-            "OCR failed for PDF."
+            "[OCR PDF] OCR failed: %s",
+            exc,
         )
 
         raise OCRProcessingError(
-            f"OCR failed for PDF: {str(exc)}"
+            f"PDF OCR failed: {exc}"
         )
-
-    finally:
-
-        if pdf is not None:
-            pdf.close()
 
 
 # ============================================================
-# OCR IMAGE
+# IMAGE OCR
 # ============================================================
 
 def ocr_image(
-    file_path: str,
+    file_bytes: bytes,
 ) -> dict:
     """
-    Perform OCR on JPG/JPEG/PNG images.
+    OCR PNG/JPG/JPEG documents.
 
-    Runs OCR on:
-    1. Original image
-    2. Preprocessed/upscaled image
-
-    The preprocessed result is preferred because it generally
-    provides better table and financial-number recognition.
-
-    Page number is explicitly set to 1 because a standalone image
-    represents one document page.
+    Both original and preprocessed images are tested.
     """
 
     try:
 
-        logger.info(
-            "[OCR IMAGE] Processing: %s",
-            file_path,
-        )
-
         image = Image.open(
-            file_path
+            io.BytesIO(file_bytes)
         )
 
-        # Ensure the image is fully loaded.
-        image.load()
-
-        # Correct camera/image orientation using EXIF data.
         image = ImageOps.exif_transpose(
             image
         )
 
-        # Convert to RGB for consistent processing.
-        image = image.convert(
-            "RGB"
-        )
+        if image.mode not in {
+            "RGB",
+            "L",
+        }:
+            image = image.convert(
+                "RGB"
+            )
 
         logger.info(
             "[OCR IMAGE] Original size: %s",
@@ -557,7 +649,7 @@ def ocr_image(
         )
 
         # ----------------------------------------------------
-        # ORIGINAL IMAGE OCR
+        # Original image
         # ----------------------------------------------------
 
         logger.info(
@@ -566,15 +658,15 @@ def ocr_image(
 
         original_result = run_ocr(
             image,
-            "ORIGINAL",
+            source="original",
         )
 
         # ----------------------------------------------------
-        # PREPROCESSED IMAGE OCR
+        # Preprocessed image
         # ----------------------------------------------------
 
-        processed_image = preprocess_image(
-            image
+        processed_image = (
+            _preprocess_image(image)
         )
 
         logger.info(
@@ -588,94 +680,63 @@ def ocr_image(
 
         processed_result = run_ocr(
             processed_image,
-            "PROCESSED",
+            source="processed",
         )
 
         # ----------------------------------------------------
-        # SELECT BETWEEN ORIGINAL AND PROCESSED
-        # ----------------------------------------------------
-        #
-        # For scanned documents, preprocessing is preferred
-        # because the user's test demonstrates that it restores
-        # decimal points and table quantities.
-        #
-        # We still compare confidence, but preprocessing receives
-        # priority when it has meaningful readable text.
+        # Select best candidate
         # ----------------------------------------------------
 
-        original_text = original_result["text"].strip()
-        processed_text = processed_result["text"].strip()
-
-        if len(processed_text) >= MIN_TEXT_LENGTH:
-
-            selected_result = processed_result
-            selected_source = "processed"
-
-        elif len(original_text) >= MIN_TEXT_LENGTH:
-
-            selected_result = original_result
-            selected_source = "original"
-
-        else:
-
-            # Both results are too short.
-            # Select the one with higher confidence only so that
-            # the error message can contain the most useful output.
-
-            if (
-                processed_result["confidence"]
-                >= original_result["confidence"]
-            ):
-                selected_result = processed_result
-                selected_source = "processed"
-            else:
-                selected_result = original_result
-                selected_source = "original"
-
-        final_text = selected_result["text"].strip()
+        selected = max(
+            [
+                original_result,
+                processed_result,
+            ],
+            key=lambda candidate: candidate["score"],
+        )
 
         logger.info(
             "[OCR IMAGE] Selected source: %s",
-            selected_source,
+            selected["source"],
         )
 
         logger.info(
             "[OCR IMAGE] Selected config: %s",
-            selected_result["config"],
+            selected["config"],
         )
 
         logger.info(
             "[OCR IMAGE] Selected confidence: %.2f",
-            selected_result["confidence"],
+            selected["confidence"],
         )
 
         logger.info(
-            "[OCR IMAGE] Final text length: %s",
-            len(final_text),
+            "[OCR IMAGE] Selected score: %.2f",
+            selected["score"],
+        )
+
+        logger.info(
+            "[OCR IMAGE] Final text length: %d",
+            len(selected["text"]),
         )
 
         logger.info(
             "[OCR IMAGE FINAL PREVIEW]\n%s",
-            final_text[:2000],
+            selected["text"][:3000],
         )
 
-        if len(final_text) < MIN_TEXT_LENGTH:
-
-            raise OCRProcessingError(
-                "OCR completed but insufficient readable text "
-                "was detected in the image."
-            )
-
         return {
-            "text": final_text,
+            "text": selected["text"],
             "pages": [
                 {
                     "page_number": 1,
-                    "text": final_text,
-                    "ocr_used": True,
+                    "text": selected["text"],
+                    "confidence": selected["confidence"],
+                    "config": selected["config"],
+                    "source": selected["source"],
+                    "score": selected["score"],
                 }
             ],
-            "ocr_used": True,
         }
 
     except OCRProcessingError:
@@ -684,46 +745,91 @@ def ocr_image(
     except Exception as exc:
 
         logger.exception(
-            "OCR failed for image."
+            "[OCR IMAGE] OCR failed: %s",
+            exc,
         )
 
         raise OCRProcessingError(
-            f"OCR failed for image: {str(exc)}"
+            f"Image OCR failed: {exc}"
         )
 
 
 # ============================================================
-# MAIN TEXT EXTRACTION DISPATCHER
+# MAIN FUNCTION
 # ============================================================
 
 def extract_text(
     file_path: str,
 ) -> dict:
     """
-    Extract text from a supported document.
+    Main OCR/text extraction function.
 
-    PDF:
-        Native text extraction first.
-        OCR fallback if necessary.
+    IMPORTANT:
+    This function follows the contract expected by
+    document_service.py:
 
-    JPG/JPEG/PNG:
-        OCR.
+        result = extract_text(file_path)
+
+        result["text"]
+        result["ocr_used"]
+
+    Returns:
+        {
+            "text": str,
+            "ocr_used": bool
+        }
     """
 
-    extension = Path(
+    path = Path(
         file_path
-    ).suffix.lower()
+    )
+
+    extension = path.suffix.lower()
 
     logger.info(
-        "[TEXT EXTRACTION] File extension: %s",
-        extension,
+        "[EXTRACT TEXT] Processing: %s",
+        path,
     )
+
+    # --------------------------------------------------------
+    # Read file
+    # --------------------------------------------------------
+
+    try:
+
+        file_bytes = path.read_bytes()
+
+    except Exception as exc:
+
+        logger.exception(
+            "[EXTRACT TEXT] Could not read file: %s",
+            exc,
+        )
+
+        raise OCRProcessingError(
+            f"Could not read document: {exc}"
+        )
+
+    # --------------------------------------------------------
+    # PDF
+    # --------------------------------------------------------
 
     if extension == ".pdf":
 
-        return extract_text_from_pdf(
-            file_path
+        text, ocr_used = (
+            extract_text_from_pdf(
+                file_bytes
+            )
         )
+
+        return {
+            "text": text,
+            "ocr_used": ocr_used,
+        }
+
+    # --------------------------------------------------------
+    # Images
+    # --------------------------------------------------------
 
     if extension in {
         ".jpg",
@@ -731,10 +837,19 @@ def extract_text(
         ".png",
     }:
 
-        return ocr_image(
-            file_path
+        result = ocr_image(
+            file_bytes
         )
 
+        return {
+            "text": result["text"],
+            "ocr_used": True,
+        }
+
+    # --------------------------------------------------------
+    # Unsupported
+    # --------------------------------------------------------
+
     raise OCRProcessingError(
-        f"Unsupported file format for text extraction: {extension}"
+        f"Unsupported file extension: {extension}"
     )

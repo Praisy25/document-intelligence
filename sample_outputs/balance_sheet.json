@@ -1,0 +1,495 @@
+{
+  "document_name": "Consolidated Balance Sheet 2024.pdf",
+  "document_type": "balance_sheet",
+  "processing_status": "EXTRACTED",
+  "file_validation": {
+    "file_type": "application/pdf",
+    "is_supported": true,
+    "is_readable": true,
+    "page_count": 1,
+    "status": "PASS"
+  },
+  "extracted_data": {
+    "statement_title": "CONSOLIDATED BALANCE SHEET",
+    "company_name": "HDFC Bank Limited",
+    "currency": "₹ in crore",
+    "periods": [
+      "As at March 31, 2024",
+      "As at March 31, 2023"
+    ],
+    "line_items": [
+      {
+        "name": "CAPITAL AND LIABILITIES",
+        "value": null,
+        "period": null,
+        "evidence": {
+          "source_text": "CAPITAL AND LIABILITIES",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Capital",
+        "value": 759.69,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Capital 1 759.69 557.97",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Capital",
+        "value": 557.97,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Capital 1 759.69 557.97",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Employees stock options outstanding",
+        "value": 2652.72,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Employees stock options outstanding 18 (4) 2,652.72 4,117.20",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Employees stock options outstanding",
+        "value": 4117.2,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Employees stock options outstanding 18 (4) 2,652.72 4,117.20",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Reserves and surplus",
+        "value": 452982.84,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Reserves and surplus 2 452,982.84 287,762.33",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Reserves and surplus",
+        "value": 287762.33,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Reserves and surplus 2 452,982.84 287,762.33",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Minority interest",
+        "value": 13383.4,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Minority interest 2a 13,383.40, 860.26",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Minority interest",
+        "value": 860.26,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Minority interest 2a 13,383.40, 860.26",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Deposits",
+        "value": 2376887.28,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Deposits 3 2,376,887.28 1,882,663.25",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Deposits",
+        "value": 1882663.25,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Deposits 3 2,376,887.28 1,882,663.25",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Borrowings",
+        "value": 730615.46,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Borrowings 4 730,615.46 256,548.66",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Borrowings",
+        "value": 256548.66,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Borrowings 4 730,615.46 256,548.66",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Other liabilities and provisions",
+        "value": 174832.07,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Other liabilities and provisions 5 174,832.07 100,922.77",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Other liabilities and provisions",
+        "value": 100922.77,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Other liabilities and provisions 5 174,832.07 100,922.77",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Policyholders' funds",
+        "value": 278080.8,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Policyholders' funds 278,080.80",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Policyholders' funds",
+        "value": null,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Policyholders' funds 278,080.80",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Total (Capital and Liabilities)",
+        "value": 4030194.26,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Total 4,030,194.26 2,530,432.44",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Total (Capital and Liabilities)",
+        "value": 2530432.44,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Total 4,030,194.26 2,530,432.44",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "ASSETS",
+        "value": null,
+        "period": null,
+        "evidence": {
+          "source_text": "ASSETS",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Cash and balances with Reserve Bank of India",
+        "value": 178718.67,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Cash and balances with Reserve Bank of India 6 178,718.67 117,189.28",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Cash and balances with Reserve Bank of India",
+        "value": 117189.28,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Cash and balances with Reserve Bank of India 6 178,718.67 117,189.28",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Balances with banks and money at call and short notice",
+        "value": 50115.84,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Balances with banks and money at call and short notice 7 50,115.84 79,958.53",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Balances with banks and money at call and short notice",
+        "value": 79958.53,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Balances with banks and money at call and short notice 7 50,115.84 79,958.53",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Investments",
+        "value": 1005681.63,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Investments 8 1,005,681.63 511,581.71",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Investments",
+        "value": 511581.71,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Investments 8 1,005,681.63 511,581.71",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Advances",
+        "value": 2565891.41,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Advances 9 2,565,891.41 1,661,949,29",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Advances",
+        "value": 1661949.29,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Advances 9 2,565,891.41 1,661,949,29",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Fixed assets",
+        "value": 12608.76,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Fixed assets 10 12,608.76 8,282.56",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Fixed assets",
+        "value": 8282.56,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Fixed assets 10 12,608.76 8,282.56",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Other assets",
+        "value": 217182.95,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Other assets \" 217,182.95 151,322.28",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Other assets",
+        "value": 151322.28,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Other assets \" 217,182.95 151,322.28",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Goodwill on Consolidation",
+        "value": null,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Goodwill on Consolidation = 148.79",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Goodwill on Consolidation",
+        "value": 148.79,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Goodwill on Consolidation = 148.79",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Total (Assets)",
+        "value": 4030194.26,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Total 4,030,194.26 2,530,432.44",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Total (Assets)",
+        "value": 2530432.44,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Total 4,030,194.26 2,530,432.44",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Contingent liabilities",
+        "value": 2344487.73,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Contingent liabilities 12 2,344,487.73 1,750,953.81",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Contingent liabilities",
+        "value": 1750953.81,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Contingent liabilities 12 2,344,487.73 1,750,953.81",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Bills for collection",
+        "value": 65332.87,
+        "period": "As at March 31, 2024",
+        "evidence": {
+          "source_text": "Bills for collection 65,332.87 71,439.54",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Bills for collection",
+        "value": 71439.54,
+        "period": "As at March 31, 2023",
+        "evidence": {
+          "source_text": "Bills for collection 65,332.87 71,439.54",
+          "page_number": 1
+        }
+      },
+      {
+        "name": "Significant accounting policies and notes to the Consolidated Financial Statements",
+        "value": null,
+        "period": null,
+        "evidence": {
+          "source_text": "Significant accounting policies and notes to the Consolidated Financial Statements 17&18",
+          "page_number": 1
+        }
+      }
+    ]
+  },
+  "validation": {
+    "overall_status": "PASS",
+    "total_checks": 6,
+    "passed_checks": 4,
+    "failed_checks": 0,
+    "validations": [
+      {
+        "check": "balance_sheet_liabilities_As at March 31, 2024",
+        "formula": "Sum of Liability Components ≈ Total Capital and Liabilities",
+        "input_values": {
+          "component_sum": 4030194.26
+        },
+        "calculated_value": 4030194.26,
+        "reported_value": 4030194.26,
+        "variance": 0.0,
+        "status": "PASS"
+      },
+      {
+        "check": "balance_sheet_assets_As at March 31, 2024",
+        "formula": "Sum of Asset Components ≈ Total Assets",
+        "input_values": {
+          "component_values": [
+            178718.67,
+            50115.84,
+            1005681.63,
+            2565891.41,
+            12608.76,
+            217182.95,
+            null
+          ]
+        },
+        "calculated_value": null,
+        "reported_value": 4030194.26,
+        "variance": null,
+        "status": "NOT_APPLICABLE"
+      },
+      {
+        "check": "balance_sheet_balance_As at March 31, 2024",
+        "formula": "Total Capital and Liabilities ≈ Total Assets",
+        "input_values": {
+          "total_capital_and_liabilities": 4030194.26
+        },
+        "calculated_value": 4030194.26,
+        "reported_value": 4030194.26,
+        "variance": 0.0,
+        "status": "PASS"
+      },
+      {
+        "check": "balance_sheet_liabilities_As at March 31, 2023",
+        "formula": "Sum of Liability Components ≈ Total Capital and Liabilities",
+        "input_values": {
+          "component_values": [
+            557.97,
+            4117.2,
+            287762.33,
+            860.26,
+            1882663.25,
+            256548.66,
+            100922.77,
+            null
+          ]
+        },
+        "calculated_value": null,
+        "reported_value": 2530432.44,
+        "variance": null,
+        "status": "NOT_APPLICABLE"
+      },
+      {
+        "check": "balance_sheet_assets_As at March 31, 2023",
+        "formula": "Sum of Asset Components ≈ Total Assets",
+        "input_values": {
+          "component_values": [
+            117189.28,
+            79958.53,
+            511581.71,
+            1661949.29,
+            8282.56,
+            151322.28,
+            148.79
+          ]
+        },
+        "calculated_value": 2530432.44,
+        "reported_value": 2530432.44,
+        "variance": 0.0,
+        "status": "PASS"
+      },
+      {
+        "check": "balance_sheet_balance_As at March 31, 2023",
+        "formula": "Total Capital and Liabilities ≈ Total Assets",
+        "input_values": {
+          "total_capital_and_liabilities": 2530432.44
+        },
+        "calculated_value": 2530432.44,
+        "reported_value": 2530432.44,
+        "variance": 0.0,
+        "status": "PASS"
+      }
+    ]
+  },
+  "processing_metadata": {
+    "ocr_used": true
+  },
+  "error": null
+}

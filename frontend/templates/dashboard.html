@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Document Intelligence</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/style.css"
+    >
+</head>
+
+<body>
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="topbar">
+
+        <div>
+            <h1>Document Intelligence</h1>
+
+            <p>
+                AI-powered financial document processing
+            </p>
+        </div>
+
+        <div class="status-badge">
+            ● API Connected
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN CONTAINER
+    ====================================================== -->
+
+    <main class="container">
+
+
+        <!-- =================================================
+             UPLOAD SECTION
+        ================================================== -->
+
+        <section class="card">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>Process Document</h2>
+
+                    <p>
+                        Upload an invoice or financial statement
+                        for extraction and validation.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <form id="uploadForm">
+
+                <div class="form-grid">
+
+                    <!-- File -->
+
+                    <div class="form-group">
+
+                        <label for="file">
+                            Document
+                        </label>
+
+                        <input
+                            type="file"
+                            id="file"
+                            name="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            required
+                        >
+
+                        <small>
+                            Supported: PDF, JPG, JPEG, PNG
+                            · Maximum 3 pages
+                        </small>
+
+                    </div>
+
+
+                    <!-- Document Type -->
+
+                    <div class="form-group">
+
+                        <label for="documentType">
+                            Document Type
+                        </label>
+
+                        <select
+                            id="documentType"
+                            name="document_type"
+                            required
+                        >
+
+                            <option value="">
+                                Select document type
+                            </option>
+
+                            <option value="invoice">
+                                Invoice
+                            </option>
+
+                            <option value="balance_sheet">
+                                Balance Sheet
+                            </option>
+
+                            <option value="profit_and_loss">
+                                Profit & Loss
+                            </option>
+
+                            <option value="cash_flow_statement">
+                                Cash Flow Statement
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-actions">
+
+                    <button
+                        type="submit"
+                        id="processButton"
+                        class="primary-button"
+                    >
+                        Process Document
+                    </button>
+
+                </div>
+
+            </form>
+
+
+            <!-- Processing message -->
+
+            <div
+                id="processingMessage"
+                class="message hidden"
+            >
+                Processing document... Please wait.
+            </div>
+
+
+            <!-- Error message -->
+
+            <div
+                id="errorMessage"
+                class="message error hidden"
+            ></div>
+
+        </section>
+
+
+        <!-- =================================================
+             DOCUMENT LIST
+        ================================================== -->
+
+        <section class="card">
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>Processed Documents</h2>
+
+                    <p>
+                        Documents stored in the database.
+                    </p>
+
+                </div>
+
+                <button
+                    id="refreshButton"
+                    class="secondary-button"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Document</th>
+
+                            <th>Type</th>
+
+                            <th>Status</th>
+
+                            <th>Created</th>
+
+                            <th>Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="documentsTableBody">
+
+                        <tr>
+
+                            <td
+                                colspan="5"
+                                class="empty-state"
+                            >
+                                Loading documents...
+                            </td>
+
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             RESULT SECTION
+        ================================================== -->
+
+        <section
+            id="resultSection"
+            class="card hidden"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>Document Result</h2>
+
+                    <p id="resultDocumentName"></p>
+
+                </div>
+
+                <button
+                    id="closeResultButton"
+                    class="secondary-button"
+                >
+                    Close
+                </button>
+
+            </div>
+
+
+            <!-- =============================================
+                 File Validation
+            ============================================== -->
+
+            <div class="result-block">
+
+                <h3>File Validation</h3>
+
+                <div
+                    id="fileValidation"
+                    class="info-grid"
+                ></div>
+
+            </div>
+
+
+            <!-- =============================================
+                 Extracted Data
+            ============================================== -->
+
+            <div class="result-block">
+
+                <h3>Extracted Data</h3>
+
+                <div id="extractedData"></div>
+
+            </div>
+
+
+            <!-- =============================================
+                 Financial Validation
+            ============================================== -->
+
+            <div class="result-block">
+
+                <h3>Financial Validation</h3>
+
+                <div id="financialValidation"></div>
+
+            </div>
+
+
+            <!-- =============================================
+                 Raw JSON
+            ============================================== -->
+
+            <div class="result-block">
+
+                <div class="raw-json-header">
+
+                    <h3>Raw JSON</h3>
+
+                    <button
+                        id="copyJsonButton"
+                        class="secondary-button"
+                    >
+                        Copy JSON
+                    </button>
+
+                </div>
+
+                <pre id="rawJson"></pre>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         JAVASCRIPT
+    ====================================================== -->
+
+    <script>
+
+        // ==================================================
+        // DOM ELEMENTS
+        // ==================================================
+
+        const uploadForm =
+            document.getElementById("uploadForm");
+
+        const fileInput =
+            document.getElementById("file");
+
+        const documentType =
+            document.getElementById("documentType");
+
+        const processButton =
+            document.getElementById("processButton");
+
+        const processingMessage =
+            document.getElementById("processingMessage");
+
+        const errorMessage =
+            document.getElementById("errorMessage");
+
+        const documentsTableBody =
+            document.getElementById(
+                "documentsTableBody"
+            );
+
+        const refreshButton =
+            document.getElementById(
+                "refreshButton"
+            );
+
+        const resultSection =
+            document.getElementById(
+                "resultSection"
+            );
+
+        const resultDocumentName =
+            document.getElementById(
+                "resultDocumentName"
+            );
+
+        const fileValidation =
+            document.getElementById(
+                "fileValidation"
+            );
+
+        const extractedData =
+            document.getElementById(
+                "extractedData"
+            );
+
+        const financialValidation =
+            document.getElementById(
+                "financialValidation"
+            );
+
+        const rawJson =
+            document.getElementById(
+                "rawJson"
+            );
+
+        const closeResultButton =
+            document.getElementById(
+                "closeResultButton"
+            );
+
+        const copyJsonButton =
+            document.getElementById(
+                "copyJsonButton"
+            );
+
+
+        // ==================================================
+        // UTILITY FUNCTIONS
+        // ==================================================
+
+        function escapeHtml(value) {
+
+            if (
+                value === null ||
+                value === undefined
+            ) {
+                return "";
+            }
+
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+
+        }
+
+
+        function formatDocumentType(type) {
+
+            const names = {
+
+                invoice: "Invoice",
+
+                balance_sheet:
+                    "Balance Sheet",
+
+                profit_and_loss:
+                    "Profit & Loss",
+
+                cash_flow_statement:
+                    "Cash Flow Statement"
+
+            };
+
+            return names[type] || type;
+
+        }
+
+
+        function formatDate(value) {
+
+            if (!value) {
+                return "-";
+            }
+
+            const date = new Date(value);
+
+            if (
+                Number.isNaN(
+                    date.getTime()
+                )
+            ) {
+                return value;
+            }
+
+            return date.toLocaleString();
+
+        }
+
+
+        function showError(message) {
+
+            errorMessage.textContent =
+                message;
+
+            errorMessage.classList.remove(
+                "hidden"
+            );
+
+        }
+
+
+        function hideError() {
+
+            errorMessage.classList.add(
+                "hidden"
+            );
+
+            errorMessage.textContent = "";
+
+        }
+
+
+        function getFieldValue(field) {
+
+            if (!field) {
+                return "-";
+            }
+
+            if (
+                field.value === null ||
+                field.value === undefined ||
+                field.value === ""
+            ) {
+                return "-";
+            }
+
+            return field.value;
+
+        }
+
+
+        // ==================================================
+        // LOAD DOCUMENTS
+        // ==================================================
+
+        async function loadDocuments() {
+
+            try {
+
+                const response =
+                    await fetch(
+                        "/api/v1/documents"
+                    );
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Failed to load documents."
+                    );
+
+                }
+
+                const data =
+                    await response.json();
+
+                renderDocuments(
+                    data.documents || []
+                );
+
+            }
+            catch (error) {
+
+                documentsTableBody.innerHTML = `
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="empty-state error-text"
+                        >
+
+                            ${escapeHtml(
+                                error.message
+                            )}
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+
+        }
+
+
+        // ==================================================
+        // RENDER DOCUMENT LIST
+        // ==================================================
+
+        function renderDocuments(documents) {
+
+            if (!documents.length) {
+
+                documentsTableBody.innerHTML = `
+
+                    <tr>
+
+                        <td
+                            colspan="5"
+                            class="empty-state"
+                        >
+
+                            No documents processed yet.
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+                return;
+
+            }
+
+
+            documentsTableBody.innerHTML =
+                documents.map(
+                    document => `
+
+                    <tr>
+
+                        <td>
+
+                            <strong>
+                                ${escapeHtml(
+                                    document.document_name
+                                )}
+                            </strong>
+
+                        </td>
+
+
+                        <td>
+
+                            ${escapeHtml(
+                                formatDocumentType(
+                                    document.document_type
+                                )
+                            )}
+
+                        </td>
+
+
+                        <td>
+
+                            <span
+                                class="status
+                                ${
+                                    document.processing_status
+                                    === "EXTRACTED"
+                                        ? "status-success"
+                                        : "status-failed"
+                                }"
+                            >
+
+                                ${escapeHtml(
+                                    document.processing_status
+                                )}
+
+                            </span>
+
+                        </td>
+
+
+                        <td>
+
+                            ${escapeHtml(
+                                formatDate(
+                                    document.created_at
+                                )
+                            )}
+
+                        </td>
+
+
+                        <td>
+
+                            <button
+                                class="view-button"
+                                onclick="viewDocument(
+                                    '${encodeURIComponent(
+                                        document.document_name
+                                    )}'
+                                )"
+                            >
+
+                                View
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                `
+                ).join("");
+
+        }
+
+
+        // ==================================================
+        // PROCESS DOCUMENT
+        // ==================================================
+
+        uploadForm.addEventListener(
+            "submit",
+            async function(event) {
+
+                event.preventDefault();
+
+                hideError();
+
+                const file =
+                    fileInput.files[0];
+
+                const type =
+                    documentType.value;
+
+
+                if (!file) {
+
+                    showError(
+                        "Please select a document."
+                    );
+
+                    return;
+
+                }
+
+
+                if (!type) {
+
+                    showError(
+                        "Please select a document type."
+                    );
+
+                    return;
+
+                }
+
+
+                const formData =
+                    new FormData();
+
+                formData.append(
+                    "file",
+                    file
+                );
+
+                formData.append(
+                    "document_type",
+                    type
+                );
+
+
+                processButton.disabled =
+                    true;
+
+                processingMessage.classList.remove(
+                    "hidden"
+                );
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/api/v1/documents/process",
+                            {
+                                method: "POST",
+                                body: formData
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (!response.ok) {
+
+                        throw new Error(
+                            data.detail?.message ||
+                            "Document processing failed."
+                        );
+
+                    }
+
+
+                    if (
+                        data.processing_status
+                        === "FAILED"
+                    ) {
+
+                        throw new Error(
+                            data.error?.message ||
+                            "Document processing failed."
+                        );
+
+                    }
+
+
+                    uploadForm.reset();
+
+
+                    await loadDocuments();
+
+
+                    displayResult(data);
+
+                }
+                catch (error) {
+
+                    showError(
+                        error.message
+                    );
+
+                }
+                finally {
+
+                    processButton.disabled =
+                        false;
+
+                    processingMessage.classList.add(
+                        "hidden"
+                    );
+
+                }
+
+            }
+        );
+
+
+        // ==================================================
+        // VIEW STORED DOCUMENT
+        // ==================================================
+
+        async function viewDocument(
+            encodedName
+        ) {
+
+            hideError();
+
+            const documentName =
+                decodeURIComponent(
+                    encodedName
+                );
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        `/api/v1/documents/${encodeURIComponent(
+                            documentName
+                        )}`
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data.detail?.message ||
+                        "Unable to load document."
+                    );
+
+                }
+
+
+                displayResult(data);
+
+            }
+            catch (error) {
+
+                showError(
+                    error.message
+                );
+
+            }
+
+        }
+
+
+        // ==================================================
+        // DISPLAY RESULT
+        // ==================================================
+
+        function displayResult(data) {
+
+            resultSection.classList.remove(
+                "hidden"
+            );
+
+
+            resultDocumentName.textContent =
+                `${data.document_name} · ${
+                    formatDocumentType(
+                        data.document_type
+                    )
+                }`;
+
+
+            renderFileValidation(
+                data.file_validation
+            );
+
+
+            renderExtractedData(
+                data.extracted_data,
+                data.document_type
+            );
+
+
+            renderFinancialValidation(
+                data.validation
+            );
+
+
+            rawJson.textContent =
+                JSON.stringify(
+                    data,
+                    null,
+                    2
+                );
+
+
+            resultSection.scrollIntoView({
+                behavior: "smooth"
+            });
+
+        }
+
+
+        // ==================================================
+        // FILE VALIDATION
+        // ==================================================
+
+        function renderFileValidation(data) {
+
+            if (!data) {
+
+                fileValidation.innerHTML =
+                    "<p>No validation data available.</p>";
+
+                return;
+
+            }
+
+
+            fileValidation.innerHTML = `
+
+                <div class="info-item">
+
+                    <span>
+                        File Type
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            data.file_type
+                        )}
+                    </strong>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <span>
+                        Supported
+                    </span>
+
+                    <strong>
+                        ${
+                            data.is_supported
+                                ? "Yes"
+                                : "No"
+                        }
+                    </strong>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <span>
+                        Readable
+                    </span>
+
+                    <strong>
+                        ${
+                            data.is_readable
+                                ? "Yes"
+                                : "No"
+                        }
+                    </strong>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <span>
+                        Pages
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            data.page_count ?? "-"
+                        )}
+                    </strong>
+
+                </div>
+
+
+                <div class="info-item">
+
+                    <span>
+                        Status
+                    </span>
+
+                    <strong>
+                        ${escapeHtml(
+                            data.status
+                        )}
+                    </strong>
+
+                </div>
+
+            `;
+
+        }
+
+
+        // ==================================================
+        // EXTRACTED DATA
+        // ==================================================
+
+        function renderExtractedData(
+            data,
+            documentType
+        ) {
+
+            if (!data) {
+
+                extractedData.innerHTML =
+                    "<p>No extracted data available.</p>";
+
+                return;
+
+            }
+
+
+            if (
+                documentType === "invoice"
+            ) {
+
+                renderInvoiceData(data);
+
+            }
+            else {
+
+                renderFinancialStatementData(
+                    data
+                );
+
+            }
+
+        }
+
+
+        // ==================================================
+        // INVOICE / RECEIPT
+        // ==================================================
+
+        function renderInvoiceData(data) {
+
+            const fields = [
+
+                [
+                    "Invoice / Receipt Number",
+                    data.invoice_number
+                ],
+
+                [
+                    "Invoice Date",
+                    data.invoice_date
+                ],
+
+                [
+                    "Vendor",
+                    data.vendor_name
+                ],
+
+                [
+                    "Customer",
+                    data.customer_name
+                ],
+
+                [
+                    "Currency",
+                    data.currency
+                ],
+
+                [
+                    "Subtotal",
+                    data.subtotal
+                ],
+
+                [
+                    "Tax Rate",
+                    data.tax_rate
+                ],
+
+                [
+                    "Tax / GST",
+                    data.tax_amount
+                ],
+
+                [
+                    "Discount",
+                    data.discount
+                ],
+
+                [
+                    "Total",
+                    data.total_amount
+                ],
+
+                [
+                    "Cash Received",
+                    data.cash_received
+                ],
+
+                [
+                    "Change",
+                    data.change_amount
+                ],
+
+                [
+                    "Total Items",
+                    data.total_items
+                ],
+
+                [
+                    "Total Quantity",
+                    data.total_quantity
+                ]
+
+            ];
+
+
+            let html = `
+
+                <div class="info-grid">
+
+            `;
+
+
+            fields.forEach(
+                ([label, field]) => {
+
+                    let value =
+                        getFieldValue(field);
+
+
+                    if (
+                        label === "Tax Rate" &&
+                        value !== "-"
+                    ) {
+
+                        value =
+                            `${value}%`;
+
+                    }
+
+
+                    html += `
+
+                        <div class="info-item">
+
+                            <span>
+                                ${escapeHtml(label)}
+                            </span>
+
+                            <strong>
+                                ${escapeHtml(value)}
+                            </strong>
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+
+            html += `
+
+                </div>
+
+            `;
+
+
+            // ==================================================
+            // LINE ITEMS
+            // ==================================================
+
+            if (
+                data.line_items &&
+                data.line_items.length
+            ) {
+
+                html += `
+
+                    <h4>
+                        Line Items
+                    </h4>
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Item Code
+                                    </th>
+
+                                    <th>
+                                        Description
+                                    </th>
+
+                                    <th>
+                                        Quantity
+                                    </th>
+
+                                    <th>
+                                        Unit Price
+                                    </th>
+
+                                    <th>
+                                        Amount
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                `;
+
+
+                data.line_items.forEach(
+                    item => {
+
+                        html += `
+
+                            <tr>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.item_code ?? "-"
+                                    )}
+                                </td>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.description ?? "-"
+                                    )}
+                                </td>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.quantity ?? "-"
+                                    )}
+                                </td>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.unit_price ?? "-"
+                                    )}
+                                </td>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.amount ?? "-"
+                                    )}
+                                </td>
+
+                            </tr>
+
+                        `;
+
+                    }
+                );
+
+
+                html += `
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                `;
+
+            }
+            else {
+
+                html += `
+
+                    <div class="empty-state">
+
+                        No line items extracted.
+
+                    </div>
+
+                `;
+
+            }
+
+
+            extractedData.innerHTML =
+                html;
+
+        }
+
+
+        // ==================================================
+        // FINANCIAL STATEMENT
+        // ==================================================
+
+        function renderFinancialStatementData(
+            data
+        ) {
+
+            let html = `
+
+                <div class="info-grid">
+
+                    <div class="info-item">
+
+                        <span>
+                            Statement
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                data.statement_title
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <span>
+                            Company
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                data.company_name
+                            )}
+                        </strong>
+
+                    </div>
+
+
+                    <div class="info-item">
+
+                        <span>
+                            Currency
+                        </span>
+
+                        <strong>
+                            ${escapeHtml(
+                                data.currency
+                            )}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            // ==================================================
+            // PERIODS
+            // ==================================================
+
+            if (
+                data.periods &&
+                data.periods.length
+            ) {
+
+                html += `
+
+                    <h4>
+                        Periods
+                    </h4>
+
+                    <div class="period-list">
+
+                `;
+
+
+                data.periods.forEach(
+                    period => {
+
+                        html += `
+
+                            <span class="period-tag">
+
+                                ${escapeHtml(
+                                    period
+                                )}
+
+                            </span>
+
+                        `;
+
+                    }
+                );
+
+
+                html += `
+
+                    </div>
+
+                `;
+
+            }
+
+
+            // ==================================================
+            // FINANCIAL LINE ITEMS
+            // ==================================================
+
+            if (
+                data.line_items &&
+                data.line_items.length
+            ) {
+
+                html += `
+
+                    <h4>
+                        Financial Line Items
+                    </h4>
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Line Item
+                                    </th>
+
+                                    <th>
+                                        Period
+                                    </th>
+
+                                    <th>
+                                        Value
+                                    </th>
+
+                                    <th>
+                                        Evidence
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                `;
+
+
+                data.line_items.forEach(
+                    item => {
+
+                        html += `
+
+                            <tr>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.name ?? "-"
+                                    )}
+                                </td>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.period ?? "-"
+                                    )}
+                                </td>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.value ?? "-"
+                                    )}
+                                </td>
+
+                                <td>
+                                    ${escapeHtml(
+                                        item.evidence?.source_text
+                                        ?? "-"
+                                    )}
+                                </td>
+
+                            </tr>
+
+                        `;
+
+                    }
+                );
+
+
+                html += `
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                `;
+
+            }
+
+
+            extractedData.innerHTML =
+                html;
+
+        }
+
+
+        // ==================================================
+        // FINANCIAL VALIDATION
+        // ==================================================
+
+        function renderFinancialValidation(
+            data
+        ) {
+
+            if (!data) {
+
+                financialValidation.innerHTML =
+                    "<p>No financial validation data available.</p>";
+
+                return;
+
+            }
+
+
+            // ==================================================
+            // OVERALL SUMMARY
+            // ==================================================
+
+            const overallStatus =
+                data.overall_status ||
+                "NOT_APPLICABLE";
+
+
+            let overallClass =
+                "validation-na";
+
+
+            if (
+                overallStatus === "PASS"
+            ) {
+
+                overallClass =
+                    "validation-pass";
+
+            }
+            else if (
+                overallStatus === "FAIL"
+            ) {
+
+                overallClass =
+                    "validation-fail";
+
+            }
+
+
+            let html = `
+
+                <div class="validation-summary">
+
+                    <div
+                        class="validation-card
+                        ${overallClass}"
+                    >
+
+                        <div class="validation-header">
+
+                            <strong>
+                                Overall Validation
+                            </strong>
+
+                            <span>
+                                ${escapeHtml(
+                                    overallStatus
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <p>
+
+                            Total Checks:
+                            <strong>
+                                ${escapeHtml(
+                                    data.total_checks ?? 0
+                                )}
+                            </strong>
+
+                        </p>
+
+
+                        <p>
+
+                            Passed:
+                            <strong>
+                                ${escapeHtml(
+                                    data.passed_checks ?? 0
+                                )}
+                            </strong>
+
+                        </p>
+
+
+                        <p>
+
+                            Failed:
+                            <strong>
+                                ${escapeHtml(
+                                    data.failed_checks ?? 0
+                                )}
+                            </strong>
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            // ==================================================
+            // INDIVIDUAL CHECKS
+            // ==================================================
+
+            const validations =
+                data.validations || [];
+
+
+            if (!validations.length) {
+
+                html += `
+
+                    <div class="empty-state">
+
+                        No validation checks available.
+
+                    </div>
+
+                `;
+
+                financialValidation.innerHTML =
+                    html;
+
+                return;
+
+            }
+
+
+            html += `
+
+                <div class="validation-summary">
+
+            `;
+
+
+            validations.forEach(
+                check => {
+
+                    const status =
+                        check.status ||
+                        "NOT_APPLICABLE";
+
+
+                    let statusClass =
+                        "validation-na";
+
+
+                    if (
+                        status === "PASS"
+                    ) {
+
+                        statusClass =
+                            "validation-pass";
+
+                    }
+                    else if (
+                        status === "FAIL"
+                    ) {
+
+                        statusClass =
+                            "validation-fail";
+
+                    }
+
+
+                    html += `
+
+                        <div
+                            class="validation-card
+                            ${statusClass}"
+                        >
+
+                            <div class="validation-header">
+
+                                <strong>
+
+                                    ${escapeHtml(
+                                        check.check ||
+                                        "Validation Check"
+                                    )}
+
+                                </strong>
+
+                                <span>
+
+                                    ${escapeHtml(
+                                        status
+                                    )}
+
+                                </span>
+
+                            </div>
+
+
+                            ${
+                                check.formula
+                                    ? `
+
+                                        <p>
+
+                                            <strong>
+                                                Formula:
+                                            </strong>
+
+                                            ${escapeHtml(
+                                                check.formula
+                                            )}
+
+                                        </p>
+
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                check.input_values
+                                    ? `
+
+                                        <p>
+
+                                            <strong>
+                                                Inputs:
+                                            </strong>
+
+                                            ${escapeHtml(
+                                                JSON.stringify(
+                                                    check.input_values
+                                                )
+                                            )}
+
+                                        </p>
+
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                check.calculated_value !==
+                                null &&
+                                check.calculated_value !==
+                                undefined
+                                    ? `
+
+                                        <p>
+
+                                            <strong>
+                                                Calculated:
+                                            </strong>
+
+                                            ${escapeHtml(
+                                                check.calculated_value
+                                            )}
+
+                                        </p>
+
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                check.reported_value !==
+                                null &&
+                                check.reported_value !==
+                                undefined
+                                    ? `
+
+                                        <p>
+
+                                            <strong>
+                                                Reported:
+                                            </strong>
+
+                                            ${escapeHtml(
+                                                check.reported_value
+                                            )}
+
+                                        </p>
+
+                                    `
+                                    : ""
+                            }
+
+
+                            ${
+                                check.variance !==
+                                null &&
+                                check.variance !==
+                                undefined
+                                    ? `
+
+                                        <p>
+
+                                            <strong>
+                                                Variance:
+                                            </strong>
+
+                                            ${escapeHtml(
+                                                check.variance
+                                            )}
+
+                                        </p>
+
+                                    `
+                                    : ""
+                            }
+
+                        </div>
+
+                    `;
+
+                }
+            );
+
+
+            html += `
+
+                </div>
+
+            `;
+
+
+            financialValidation.innerHTML =
+                html;
+
+        }
+
+
+        // ==================================================
+        // CLOSE RESULT
+        // ==================================================
+
+        closeResultButton.addEventListener(
+            "click",
+            function() {
+
+                resultSection.classList.add(
+                    "hidden"
+                );
+
+                window.scrollTo({
+                    top: 0,
+                    behavior: "smooth"
+                });
+
+            }
+        );
+
+
+        // ==================================================
+        // REFRESH DOCUMENTS
+        // ==================================================
+
+        refreshButton.addEventListener(
+            "click",
+            loadDocuments
+        );
+
+
+        // ==================================================
+        // COPY RAW JSON
+        // ==================================================
+
+        copyJsonButton.addEventListener(
+            "click",
+            async function() {
+
+                try {
+
+                    await navigator.clipboard.writeText(
+                        rawJson.textContent
+                    );
+
+
+                    copyJsonButton.textContent =
+                        "Copied!";
+
+
+                    setTimeout(
+                        () => {
+
+                            copyJsonButton.textContent =
+                                "Copy JSON";
+
+                        },
+                        1500
+                    );
+
+                }
+                catch {
+
+                    showError(
+                        "Unable to copy JSON."
+                    );
+
+                }
+
+            }
+        );
+
+
+        // ==================================================
+        // INITIAL LOAD
+        // ==================================================
+
+        loadDocuments();
+
+    </script>
+
+</body>
+
+</html>

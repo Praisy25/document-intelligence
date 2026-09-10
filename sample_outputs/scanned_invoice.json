@@ -1,0 +1,202 @@
+{
+  "document_name": "scanned_invoice_test.png",
+  "document_type": "invoice",
+  "processing_status": "EXTRACTED",
+  "file_validation": {
+    "file_type": "image/png",
+    "is_supported": true,
+    "is_readable": true,
+    "page_count": 1,
+    "status": "PASS"
+  },
+  "extracted_data": {
+    "invoice_number": {
+      "value": "OCR-TEST-001",
+      "evidence": {
+        "source_text": "Invoice No: OCR-TEST-001",
+        "page_number": 1
+      }
+    },
+    "invoice_date": {
+      "value": "2026-09-10",
+      "evidence": {
+        "source_text": "Date: 2026-09-10",
+        "page_number": 1
+      }
+    },
+    "vendor_name": {
+      "value": "Test Supplies Pvt Ltd",
+      "evidence": {
+        "source_text": "Vendor. Test Supplies Pvt Ltd",
+        "page_number": 1
+      }
+    },
+    "customer_name": {
+      "value": null,
+      "evidence": null
+    },
+    "currency": {
+      "value": null,
+      "evidence": null
+    },
+    "subtotal": {
+      "value": 150.0,
+      "evidence": {
+        "source_text": "Subtotal: 150.00",
+        "page_number": 1
+      }
+    },
+    "tax_rate": {
+      "value": null,
+      "evidence": null
+    },
+    "tax_amount": {
+      "value": 27.0,
+      "evidence": {
+        "source_text": "Tax: 27.00",
+        "page_number": 1
+      }
+    },
+    "discount": {
+      "value": null,
+      "evidence": null
+    },
+    "total_amount": {
+      "value": 177.0,
+      "evidence": {
+        "source_text": "Total: 177.00",
+        "page_number": 1
+      }
+    },
+    "cash_received": {
+      "value": 200.0,
+      "evidence": {
+        "source_text": "Cash Received: 200.00",
+        "page_number": 1
+      }
+    },
+    "change_amount": {
+      "value": 23.0,
+      "evidence": {
+        "source_text": "Change: 23.00",
+        "page_number": 1
+      }
+    },
+    "total_items": {
+      "value": 2,
+      "evidence": {
+        "source_text": "TS-001 Note book 2 50.00 100.00\nTS-002 Pen 5 10.00 50.00",
+        "page_number": 1
+      }
+    },
+    "total_quantity": {
+      "value": 7,
+      "evidence": {
+        "source_text": "TS-001 Note book 2 50.00 100.00\nTS-002 Pen 5 10.00 50.00",
+        "page_number": 1
+      }
+    },
+    "line_items": [
+      {
+        "item_code": "TS-001",
+        "description": "Note book",
+        "quantity": 2.0,
+        "unit_price": 50.0,
+        "amount": 100.0,
+        "evidence": {
+          "source_text": "TS-001 Note book 2 50.00 100.00",
+          "page_number": 1
+        }
+      },
+      {
+        "item_code": "TS-002",
+        "description": "Pen",
+        "quantity": 5.0,
+        "unit_price": 10.0,
+        "amount": 50.0,
+        "evidence": {
+          "source_text": "TS-002 Pen 5 10.00 50.00",
+          "page_number": 1
+        }
+      }
+    ]
+  },
+  "validation": {
+    "overall_status": "PASS",
+    "total_checks": 5,
+    "passed_checks": 5,
+    "failed_checks": 0,
+    "not_applicable_checks": 0,
+    "validations": [
+      {
+        "check_name": "Invoice line item 1 quantity × unit price",
+        "formula": "quantity × unit price ≈ line amount",
+        "input_values": {
+          "quantity": 2.0,
+          "unit_price": 50.0,
+          "reported_line_amount": 100.0
+        },
+        "calculated_value": 100.0,
+        "reported_value": 100.0,
+        "variance": 0.0,
+        "status": "PASS"
+      },
+      {
+        "check_name": "Invoice line item 2 quantity × unit price",
+        "formula": "quantity × unit price ≈ line amount",
+        "input_values": {
+          "quantity": 5.0,
+          "unit_price": 10.0,
+          "reported_line_amount": 50.0
+        },
+        "calculated_value": 50.0,
+        "reported_value": 50.0,
+        "variance": 0.0,
+        "status": "PASS"
+      },
+      {
+        "check_name": "Invoice line items vs subtotal",
+        "formula": "sum(line item amounts) ≈ subtotal",
+        "input_values": {
+          "line_item_sum": 150.0,
+          "reported_subtotal": 150.0
+        },
+        "calculated_value": 150.0,
+        "reported_value": 150.0,
+        "variance": 0.0,
+        "status": "PASS"
+      },
+      {
+        "check_name": "Invoice total reconciliation",
+        "formula": "subtotal - discount + tax ≈ total",
+        "input_values": {
+          "subtotal": 150.0,
+          "discount": 0.0,
+          "tax_amount": 27.0,
+          "reported_total": 177.0
+        },
+        "calculated_value": 177.0,
+        "reported_value": 177.0,
+        "variance": 0.0,
+        "status": "PASS"
+      },
+      {
+        "check_name": "Invoice cash/change reconciliation",
+        "formula": "cash received - total ≈ change",
+        "input_values": {
+          "cash_received": 200.0,
+          "total_amount": 177.0,
+          "reported_change": 23.0
+        },
+        "calculated_value": 23.0,
+        "reported_value": 23.0,
+        "variance": 0.0,
+        "status": "PASS"
+      }
+    ]
+  },
+  "processing_metadata": {
+    "ocr_used": true
+  },
+  "error": null
+}

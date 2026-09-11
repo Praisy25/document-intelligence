@@ -352,6 +352,9 @@
         // DOM ELEMENTS
         // ==================================================
 
+        const API_BASE_URL =
+    "https://document-intelligence-20e4.onrender.com/api/v1";
+
         const uploadForm =
             document.getElementById("uploadForm");
 
@@ -539,8 +542,8 @@
 
                 const response =
                     await fetch(
-                        "/api/v1/documents"
-                    );
+                      `${API_BASE_URL}/documents`
+                  );
 
                 if (!response.ok) {
 
@@ -766,12 +769,12 @@
 
                     const response =
                         await fetch(
-                            "/api/v1/documents/process",
-                            {
-                                method: "POST",
-                                body: formData
-                            }
-                        );
+                          `${API_BASE_URL}/documents/process`,
+                          {
+                              method: "POST",
+                              body: formData
+                          }
+                      );
 
 
                     const data =
@@ -852,10 +855,10 @@
 
                 const response =
                     await fetch(
-                        `/api/v1/documents/${encodeURIComponent(
-                            documentName
-                        )}`
-                    );
+                      `${API_BASE_URL}/documents/${encodeURIComponent(
+                          documentName
+                      )}`
+                  );
 
 
                 const data =

@@ -429,7 +429,7 @@ def create_client() -> OpenAI:
         timeout=60.0,
 
         # Retry only once for transient failures.
-        max_retries=3,
+        max_retries=0,
     )
 
 
@@ -523,38 +523,76 @@ def extract_document(
 
     try:
 
-        response = client.chat.completions.create(
-            model=settings.llm_model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a financial document extraction engine. "
-                        "Return only valid JSON matching the requested schema. "
-                        "Never hallucinate missing information."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-        )
+        max_attempts = 4
+
+        for attempt in range(1, max_attempts + 1):
+
+            try:
+
+                logger.info(
+                    "Kimi request attempt %s/%s",
+                    attempt,
+                    max_attempts,
+                )
+
+                response = client.chat.completions.create(
+                    model=settings.llm_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": (
+                                "You are a financial document extraction engine. "
+                                "Return only valid JSON matching the requested schema. "
+                                "Never hallucinate missing information."
+                            ),
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt,
+                        },
+                    ],
+                )
+
+                break
+
+            except Exception as exc:
+
+                error_text = str(exc)
+
+                is_rate_limit = (
+                    "429" in error_text
+                    or "rate_limit" in error_text.lower()
+                    or "concurrency" in error_text.lower()
+                )
+
+                if not is_rate_limit or attempt == max_attempts:
+                    raise
+
+                wait_seconds = 2 ** attempt
+
+                logger.warning(
+                    "Kimi rate limit/concurrency detected. "
+                    "Waiting %s seconds before retry %s/%s.",
+                    wait_seconds,
+                    attempt + 1,
+                    max_attempts,
+                )
+
+                time.sleep(wait_seconds)
 
     except Exception as exc:
 
-        elapsed = time.time() - start_time
+                elapsed = time.time() - start_time
 
-        logger.exception(
+                logger.exception(
             "Kimi API request failed after %.2f seconds | error=%s",
             elapsed,
             str(exc),
         )
 
-        raise ExtractionError(
-            f"Kimi API request failed: {exc}"
-        ) from exc
-
+                raise ExtractionError(
+                    f"Kimi API request failed: {exc}"
+                ) from exc
     # --------------------------------------------------------
     # RESPONSE TIMING
     # --------------------------------------------------------

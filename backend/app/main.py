@@ -117,3 +117,14 @@ def health_check():
         "status": "healthy",
         "service": "document-intelligence",
     }
+
+
+
+@app.get("/api/v1")
+def api_root():
+    return {
+        "name": "Document Intelligence API",
+        "status": "running",
+        "version": "v1",
+        "docs": "/docs",
+    }

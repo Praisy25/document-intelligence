@@ -426,7 +426,7 @@ def create_client() -> OpenAI:
         base_url=settings.llm_base_url,
 
         # Prevent the Render request from hanging indefinitely.
-        timeout=60.0,
+        timeout=480.0,
 
         # Retry only once for transient failures.
         max_retries=0,
